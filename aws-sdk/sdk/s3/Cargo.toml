@@ -74,11 +74,12 @@ version = "0.3"
 version = "1"
 [dev-dependencies.tokio]
 version = "1"
-features = ["macros", "test-util", "rt"]
+features = ["macros", "time", "test-util", "rt"]
 [features]
 client = ["aws-hyper", "aws-smithy-client", "tower"]
 rustls = ["aws-hyper/rustls"]
 native-tls = ["aws-hyper/native-tls"]
-default = ["client", "rustls"]
+rt-tokio = ["aws-hyper/rt-tokio", "aws-smithy-async/rt-tokio"]
+default = ["client", "rustls", "rt-tokio"]
 
 
