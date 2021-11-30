@@ -136,6 +136,9 @@ impl Builder {
     }
     /// Set the sleep_impl for the builder
     ///
+    /// If no sleep implementation is given, this will default to the value
+    /// returned by [`aws_smithy_async::rt::sleep::default_async_sleep`].
+    ///
     /// # Examples
     ///
     /// ```no_run
@@ -164,6 +167,9 @@ impl Builder {
     }
 
     /// Set the sleep_impl for the builder
+    ///
+    /// If no sleep implementation is given, this will default to the value
+    /// returned by [`aws_smithy_async::rt::sleep::default_async_sleep`].
     ///
     /// # Examples
     ///
@@ -273,7 +279,9 @@ impl Builder {
         Config {
             app_name: self.app_name,
             timeout_config: self.timeout_config,
-            sleep_impl: self.sleep_impl,
+            sleep_impl: self
+                .sleep_impl
+                .or_else(aws_smithy_async::rt::sleep::default_async_sleep),
             retry_config: self.retry_config,
             endpoint_resolver: self
                 .endpoint_resolver

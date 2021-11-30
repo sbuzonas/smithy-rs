@@ -179,6 +179,9 @@ impl<C, M> Builder<C, M> {
     }
 
     /// Set the [`AsyncSleep`] function that the [`Client`] will use to create things like timeout futures.
+    ///
+    /// If not set explicitly, this will default to the value returned by
+    /// [`aws_smithy_async::rt::sleep::default_async_sleep`].
     pub fn set_sleep_impl(&mut self, async_sleep: Option<Arc<dyn AsyncSleep>>) {
         self.sleep_impl = async_sleep;
     }
@@ -220,7 +223,9 @@ impl<C, M, R> Builder<C, M, R> {
             retry_policy: self.retry_policy,
             middleware: self.middleware,
             timeout_config: self.timeout_config,
-            sleep_impl: self.sleep_impl,
+            sleep_impl: self
+                .sleep_impl
+                .or_else(aws_smithy_async::rt::sleep::default_async_sleep),
         }
     }
 }
@@ -253,5 +258,20 @@ where
     /// # }
     pub fn build_dyn(self) -> erase::DynClient<R> {
         self.build().into_dyn()
+    }
+}
+
+#[cfg(all(test, feature = "test-util", feature = "rt-tokio"))]
+mod tests {
+    use super::*;
+    use crate::test_connection::TestConnection;
+
+    #[test]
+    fn default_async_sleep_set_if_not_specified() {
+        let client = Builder::new()
+            .connector(TestConnection::<SdkBody>::new(Vec::new()))
+            .middleware(tower::layer::util::Identity::new())
+            .build();
+        assert!(client.sleep_impl.is_some());
     }
 }
