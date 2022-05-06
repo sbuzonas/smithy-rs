@@ -5,7 +5,7 @@
 
 //! Protocol helpers.
 use crate::rejection::RequestRejection;
-use axum_core::extract::RequestParts;
+use crate::request::RequestParts;
 use paste::paste;
 
 /// Supported protocols.

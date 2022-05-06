@@ -5,7 +5,7 @@
 
 // This code was copied and then modified from Tokio's Axum.
 
-/* Copyright (c) 2021 Tower Contributors
+/* Copyright (c) 2022 Tower Contributors
  *
  * Permission is hereby granted, free of charge, to any
  * person obtaining a copy of this software and associated
@@ -32,33 +32,36 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-//! Error definition.
+use std::convert::Infallible;
 
-use std::{error::Error as StdError, fmt};
+use crate::body::BoxBody;
 
-/// Errors that can happen when using this crate.
-#[derive(Debug)]
-pub struct Error {
-    inner: BoxError,
+#[doc(hidden)]
+pub type Response<T = BoxBody> = http::Response<T>;
+
+/// Trait for generating responses.
+///
+/// Types that implement `IntoResponse` can be returned from handlers.
+pub trait IntoResponse {
+    /// Create a response.
+    fn into_response(self) -> Response;
 }
 
-pub type BoxError = Box<dyn StdError + Send + Sync>;
-
-impl Error {
-    /// Create a new `Error` from a boxable error.
-    pub(crate) fn new(error: impl Into<BoxError>) -> Self {
-        Self { inner: error.into() }
+impl<T, E> IntoResponse for Result<T, E>
+where
+    T: IntoResponse,
+    E: IntoResponse,
+{
+    fn into_response(self) -> Response {
+        match self {
+            Ok(value) => value.into_response(),
+            Err(err) => err.into_response(),
+        }
     }
 }
 
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.inner.fmt(f)
-    }
-}
-
-impl StdError for Error {
-    fn source(&self) -> Option<&(dyn StdError + 'static)> {
-        Some(&*self.inner)
+impl IntoResponse for Infallible {
+    fn into_response(self) -> Response {
+        match self {}
     }
 }
